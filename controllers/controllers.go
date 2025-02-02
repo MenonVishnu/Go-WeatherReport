@@ -7,10 +7,13 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"gopkg.in/gomail.v2"
 
+	"github.com/MenonVishnu/weather/db"
 	"github.com/MenonVishnu/weather/helpers"
+	"github.com/go-redis/redis/v8"
 )
 
 type weatherData struct {
@@ -33,8 +36,11 @@ func SendMail() {
 		fmt.Println("Error Converting SMTP Port!! ", err)
 	}
 
-	for _, user := range helpers.Users {
+	//Redis Connection
+	r := db.CreateClient(0)
+	defer r.Close()
 
+	for _, user := range helpers.Users {
 		subject := fmt.Sprintf("Today's Temperature in %s", user.City)
 
 		m := gomail.NewMessage()
@@ -44,16 +50,31 @@ func SendMail() {
 
 		//Before API Request I could use redis to check weather the city data is already available or not
 		/*Redis Get Query*/
+		value, err := r.Get(db.Ctx, user.City).Result()
+		if err == redis.Nil {
+			fmt.Println("No data for City: " + user.City + " in Redis")
 
-		//API Request
-		body, err := Query(user.City)
-		if err != nil {
-			fmt.Println(err)
+			//API Request
+			body, err := Query(user.City)
+			if err != nil {
+				fmt.Println(err)
+			}
+			m.SetBody("text/plain", fmt.Sprintf("%v", body))
+
+			/*Redis Set Query*/
+			//If the city data is not available, store the same into redis cache so that you don't need to call the API again
+
+			//expiry set for 1 hour
+			err = r.Set(db.Ctx, user.City, body, 3600*time.Second).Err()
+			if err != nil {
+				fmt.Println("Could Not Connect to Redis, ", err)
+			}
+
+		} else if err != nil {
+			fmt.Println("Error in Redis, ", err)
+		} else {
+			m.SetBody("text/plain", fmt.Sprintf("%v", value))
 		}
-		m.SetBody("text/plain", fmt.Sprintf("%v", body))
-
-		/*Redis Set Query*/
-		//If the city data is not available, store the same into redis cache so that you don't need to call the API again
 
 		dialer := gomail.NewDialer(SMTPHost, SMTPPort, Username, Password)
 		err = dialer.DialAndSend(m)
@@ -74,8 +95,8 @@ func Query(city string) (weatherData, error) {
 	if err != nil {
 		return weatherData{}, err
 	}
-
-	resp, err := http.Get("http://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=" + apiConfigData.OpenWeatherMapApiKey)
+	fmt.Println("API Called")
+	resp, err := http.Get("http://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=" + apiConfigData.OpenWeatherMapApiKey + "&units=metric")
 	if err != nil {
 		return weatherData{}, err
 	}
