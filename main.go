@@ -19,9 +19,17 @@ func main() {
 		fmt.Println(err)
 	}
 
-	// Cron Function to send mail every day at 9
+	// Cron Function to send mail every day at 9 AM
+	/*
+		Cron Function Parameter:
+		1. Minutes 	(0-60)
+		2. Hours	(0-24)
+		3. Day 		(0-31)
+		4. Month	(1-12)
+		5. Year		(0-6)
+	*/
 	c := cron.New()
-	_, err = c.AddFunc("45 14 * * *", controllers.SendMail)
+	_, err = c.AddFunc("0 9 * * *", controllers.SendMail)
 	if err != nil {
 		fmt.Println("Error Scheduling Cron Job!!", err)
 	}
