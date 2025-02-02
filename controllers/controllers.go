@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/smtp"
 	"os"
+	"strconv"
 	"strings"
+
+	"gopkg.in/gomail.v2"
 
 	"github.com/MenonVishnu/weather/helpers"
 )
@@ -18,55 +20,49 @@ type weatherData struct {
 	} `json:"main"`
 }
 
-type EmailRequest struct {
-	To      string `json:"to"`
-	Subject string `json:"subject"`
-	Body    string `json:"body"`
-}
-
-var (
-	SMTPHost = os.Getenv("SMTPHOST") // Replace with your SMTP server
-	SMTPPort = os.Getenv("SMTPPORT") // Typically 587 for TLS
-	Username = os.Getenv("USERNAME") // Replace with your email
-	Password = os.Getenv("PASSWORD") // Replace with your email app password
-	city     = "Airoli"
-)
-
-func SendMail(w http.ResponseWriter, r *http.Request) {
-	var emailRequest EmailRequest
-
-	// Parse the JSON body
-	err := json.NewDecoder(r.Body).Decode(&emailRequest)
-	if err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
-		return
-	}
-
+func SendMail() {
+	var (
+		SMTPHost = os.Getenv("SMTPHOST")
+		SMTPport = os.Getenv("SMTPPORT")
+		Username = os.Getenv("EMAIL")
+		Password = os.Getenv("PASS")
+	)
 	// Prepare the email message
-	from := Username
-	to := emailRequest.To
-	subject := emailRequest.Subject
-	//API Request
-	body, err := Query(city)
+	SMTPPort, err := strconv.Atoi(SMTPport)
 	if err != nil {
-		fmt.Println(err)
-	}
-	message := fmt.Sprintf("From: %s\nTo: %s\nSubject: %s\n\n%v", from, to, subject, body)
-
-	// Set up authentication
-	auth := smtp.PlainAuth("", Username, Password, SMTPHost)
-
-	// Send the email
-	err = smtp.SendMail(SMTPHost+":"+SMTPPort, auth, from, []string{to}, []byte(message))
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to send email: %v", err), http.StatusInternalServerError)
-		return
+		fmt.Println("Error Converting SMTP Port!! ", err)
 	}
 
-	// Respond with success
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Email sent successfully to %s", to)
+	for _, user := range helpers.Users {
 
+		subject := fmt.Sprintf("Today's Temperature in %s", user.City)
+
+		m := gomail.NewMessage()
+		m.SetHeader("From", Username)
+		m.SetHeader("To", user.Email)
+		m.SetHeader("Subject", subject)
+
+		//Before API Request I could use redis to check weather the city data is already available or not
+		/*Redis Get Query*/
+
+		//API Request
+		body, err := Query(user.City)
+		if err != nil {
+			fmt.Println(err)
+		}
+		m.SetBody("text/plain", fmt.Sprintf("%v", body))
+
+		/*Redis Set Query*/
+		//If the city data is not available, store the same into redis cache so that you don't need to call the API again
+
+		dialer := gomail.NewDialer(SMTPHost, SMTPPort, Username, Password)
+		err = dialer.DialAndSend(m)
+		if err != nil {
+			fmt.Println("Error Sending Mail to ", user.Email, "  ", err)
+		} else {
+			fmt.Println("Email Sent Success!!")
+		}
+	}
 }
 
 func Hello(w http.ResponseWriter, r *http.Request) {

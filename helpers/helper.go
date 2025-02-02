@@ -54,7 +54,7 @@ func StoreUserList(filename string, users []UserList) error {
 		return err
 	}
 
-	err = os.WriteFile(filename, bytes, 0644)
+	err = os.WriteFile(filename, bytes, 0644) //0644 is the the permissions for that file
 	if err != nil {
 		return err
 	}

@@ -10,6 +10,7 @@ import (
 	"github.com/MenonVishnu/weather/controllers"
 	"github.com/MenonVishnu/weather/helpers"
 	"github.com/joho/godotenv"
+	"github.com/robfig/cron/v3"
 )
 
 func main() {
@@ -18,9 +19,19 @@ func main() {
 		fmt.Println(err)
 	}
 
+	// Cron Function to send mail every day at 9
+	c := cron.New()
+	_, err = c.AddFunc("45 14 * * *", controllers.SendMail)
+	if err != nil {
+		fmt.Println("Error Scheduling Cron Job!!", err)
+	}
+	c.Start()
+
 	//get emails from text file
 	helpers.Users, _ = helpers.LoadUserList(os.Getenv("FILENAME"))
 
+	/*For debugging Purpose*/
+	// http.HandleFunc("/send", controllers.SendMail)
 	http.HandleFunc("/hello", controllers.Hello)
 	http.HandleFunc("/weather/", func(w http.ResponseWriter, r *http.Request) {
 		city := strings.SplitN(r.URL.Path, "/", 3)[2]
