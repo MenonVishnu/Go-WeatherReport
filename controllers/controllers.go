@@ -36,10 +36,6 @@ func SendMail() {
 		fmt.Println("Error Converting SMTP Port!! ", err)
 	}
 
-	//Redis Connection
-	r := db.CreateClient(0)
-	defer r.Close()
-
 	for _, user := range helpers.Users {
 		subject := fmt.Sprintf("Today's Temperature in %s", user.City)
 
@@ -48,33 +44,12 @@ func SendMail() {
 		m.SetHeader("To", user.Email)
 		m.SetHeader("Subject", subject)
 
-		//Before API Request I could use redis to check weather the city data is already available or not
-		/*Redis Get Query*/
-		value, err := r.Get(db.Ctx, user.City).Result()
-		if err == redis.Nil {
-			fmt.Println("No data for City: " + user.City + " in Redis")
-
-			//API Request
-			body, err := Query(user.City)
-			if err != nil {
-				fmt.Println(err)
-			}
-			m.SetBody("text/plain", fmt.Sprintf("%v", body))
-
-			/*Redis Set Query*/
-			//If the city data is not available, store the same into redis cache so that you don't need to call the API again
-
-			//expiry set for 1 hour
-			err = r.Set(db.Ctx, user.City, body, 3600*time.Second).Err()
-			if err != nil {
-				fmt.Println("Could Not Connect to Redis, ", err)
-			}
-
-		} else if err != nil {
-			fmt.Println("Error in Redis, ", err)
-		} else {
-			m.SetBody("text/plain", fmt.Sprintf("%v", value))
+		//API Request
+		body, err := Query(user.City)
+		if err != nil {
+			fmt.Println(err)
 		}
+		m.SetBody("text/plain", fmt.Sprintf("%v", body))
 
 		dialer := gomail.NewDialer(SMTPHost, SMTPPort, Username, Password)
 		err = dialer.DialAndSend(m)
@@ -95,23 +70,59 @@ func Query(city string) (weatherData, error) {
 	if err != nil {
 		return weatherData{}, err
 	}
-	fmt.Println("API Called")
-	resp, err := http.Get("http://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=" + apiConfigData.OpenWeatherMapApiKey + "&units=metric")
-	if err != nil {
-		return weatherData{}, err
-	}
 
-	defer resp.Body.Close()
+	//Redis Connection
+	r := db.CreateClient(0)
+	defer r.Close()
 
 	var data weatherData
-	err = json.NewDecoder(resp.Body).Decode(&data)
-	if err != nil {
+
+	//Before API Request I could use redis to check weather the city data is already available or not
+	/*Redis Get Query*/
+	value, err := r.Get(db.Ctx, city).Result()
+	if err == redis.Nil {
+		fmt.Println("No data for City: " + city + " in Redis")
+
+		fmt.Println("API Called")
+		resp, err := http.Get("http://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=" + apiConfigData.OpenWeatherMapApiKey + "&units=metric")
+		if err != nil {
+			return weatherData{}, err
+		}
+		defer resp.Body.Close()
+
+		err = json.NewDecoder(resp.Body).Decode(&data)
+		if err != nil {
+			return weatherData{}, err
+		}
+		fmt.Println(data)
+
+		//converting the data to json
+		jsonData, err := json.Marshal(data)
+		if err != nil {
+			fmt.Println("Json Data Conversion Failed", err)
+		}
+
+		/*Redis Set Query*/
+		//Since the city data is not available, store the same into redis cache so that you don't need to call the API again
+
+		//expiry set for 1 hour
+		err = r.Set(db.Ctx, city, jsonData, 3600*time.Second).Err()
+		if err != nil {
+			fmt.Println("Could Not Set the value in Redis, ", err)
+		}
+
+	} else if err != nil {
+		fmt.Println("Error in Redis, ", err)
 		return weatherData{}, err
+	} else {
+		err = json.Unmarshal([]byte(value), &data)
+		if err != nil {
+			fmt.Println("Unable to Unmarshal Data from Json, ", err)
+			return weatherData{}, err
+		}
 	}
-	fmt.Println(data)
 
 	return data, nil
-
 }
 
 // Need to change this according to the UserList array - done, Need to test
