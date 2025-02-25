@@ -96,7 +96,7 @@ func Query(city string) (weatherData, error) {
 		}
 		fmt.Println(data)
 
-		//converting the data to json
+		//converting the data to json to store it in redis
 		jsonData, err := json.Marshal(data)
 		if err != nil {
 			fmt.Println("Json Data Conversion Failed", err)
@@ -115,6 +115,7 @@ func Query(city string) (weatherData, error) {
 		fmt.Println("Error in Redis, ", err)
 		return weatherData{}, err
 	} else {
+		fmt.Println("API Not Called!! Data From Redis :)")
 		err = json.Unmarshal([]byte(value), &data)
 		if err != nil {
 			fmt.Println("Unable to Unmarshal Data from Json, ", err)
