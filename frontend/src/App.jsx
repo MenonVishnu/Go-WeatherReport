@@ -13,6 +13,16 @@ function App() {
 		city: "",
 	});
 
+	const [hideInitial, setHideInitial] = useState(true);
+
+	const weatherResult = document.getElementById("weatherResult");
+	const weatherError = document.getElementById("weatherError");
+	const initialState = document.getElementById("initialState");
+
+	const hideInitialDiv = () => {
+		setHideInitial(false);
+	};
+
 	const ApiData = {
 		city: null,
 		date: null,
@@ -23,10 +33,6 @@ function App() {
 		wind: 16,
 		pressure: 1001,
 	};
-
-	const weatherResult = document.getElementById("weatherResult");
-	const weatherError = document.getElementById("weatherError");
-	const initialState = document.getElementById("initialState");
 
 	const filterData = (result) => {
 		ApiData.city = result.name;
@@ -46,45 +52,49 @@ function App() {
 	const getWeather = () => {
 		//API Call to Weather Application.
 		console.log("Weather Called for city: ", city);
-		//once getWeather API call is called then remove the initial state
-		initialState.classList.add("hidden");
-
-		// const result = " "; //API Results;
-		const result = {
-			coord: { lon: 13.4105, lat: 52.5244 },
-			weather: [
-				{
-					id: 803,
-					main: "Clouds",
-					description: "broken clouds",
-					icon: "04d",
+		//once getWeather API call is called then remove the initial state div
+		hideInitialDiv();
+		var result;
+		if (city === "berlin") {
+			result = {
+				coord: { lon: 13.4105, lat: 52.5244 },
+				weather: [
+					{
+						id: 803,
+						main: "Clouds",
+						description: "broken clouds",
+						icon: "04d",
+					},
+				],
+				base: "stations",
+				main: {
+					temp: 22.35,
+					feels_like: 21.76,
+					temp_min: 22.35,
+					temp_max: 22.35,
+					pressure: 1023,
+					humidity: 43,
+					sea_level: 1023,
+					grnd_level: 1018,
 				},
-			],
-			base: "stations",
-			main: {
-				temp: 22.35,
-				feels_like: 21.76,
-				temp_min: 22.35,
-				temp_max: 22.35,
-				pressure: 1023,
-				humidity: 43,
-				sea_level: 1023,
-				grnd_level: 1018,
-			},
-			visibility: 10000,
-			wind: { speed: 4.4, deg: 308, gust: 5.3 },
-			clouds: { all: 78 },
-			dt: 1745937571,
-			sys: { country: "DE", sunrise: 1745897919, sunset: 1745951311 },
-			timezone: 7200,
-			id: 2950159,
-			name: "Berlin",
-			cod: 200,
-		};
+				visibility: 10000,
+				wind: { speed: 4.4, deg: 308, gust: 5.3 },
+				clouds: { all: 78 },
+				dt: 1745937571,
+				sys: { country: "DE", sunrise: 1745897919, sunset: 1745951311 },
+				timezone: 7200,
+				id: 2950159,
+				name: "Berlin",
+				cod: 200,
+			};
+		} else {
+			result = null; //API Results;
+		}
 
 		if (result) {
 			//if result is present
 			weatherResult.classList.remove("hidden");
+			weatherError.classList.add("hidden");
 
 			filterData(result);
 
@@ -107,12 +117,13 @@ function App() {
 			pressureEl.textContent = `${ApiData.pressure} hPa`;
 		} else {
 			weatherError.classList.remove("hidden");
+			weatherResult.classList.add("hidden");
 		}
 	};
 
 	const subscribeUser = () => {
 		//API Call to add user to subscription list.
-		console.log("User ADded: ", userData);
+		console.log("User Added: ", userData);
 
 		userData.name = "";
 		userData.email = "";
@@ -254,17 +265,17 @@ function App() {
 
 	return (
 		<>
-			<div className="container mx-auto max-w-4xl py-8">
+			<div className="container mx-auto max-w-5xl py-8">
 				<header className="text-center mb-8">
 					<h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
-						SkyView Weather
+						Go Weather
 					</h1>
 					<p className="text-blue-100">Your personal weather companion</p>
 				</header>
 
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+				<div className="grid grid-cols-1 md:grid-cols-5 gap-6">
 					{/* <!-- Weather Search Section --> */}
-					<div className="md:col-span-2">
+					<div className="md:col-span-3">
 						<div className="glass-effect rounded-xl p-6 h-full">
 							<h2 className="text-xl font-semibold text-white mb-4">
 								Check Weather
@@ -329,30 +340,32 @@ function App() {
 								<p>City not found. Please try again.</p>
 							</div>
 
-							<div id="initialState" className="text-center py-10">
-								<div className="weather-icon mb-4">
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="80"
-										height="80"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="white"
-										strokeWidth="2"
-										strokeLinecap="round"
-										strokeLinejoin="round">
-										<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
-									</svg>
+							{hideInitial && (
+								<div id="initialState" className="text-center py-10">
+									<div className="weather-icon mb-4">
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											width="80"
+											height="80"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="white"
+											strokeWidth="2"
+											strokeLinecap="round"
+											strokeLinejoin="round">
+											<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+										</svg>
+									</div>
+									<p className="text-white text-lg">
+										Enter a city name to get the current weather
+									</p>
 								</div>
-								<p className="text-white text-lg">
-									Enter a city name to get the current weather
-								</p>
-							</div>
+							)}
 						</div>
 					</div>
 
 					{/* <!-- Weather Notification Signup --> */}
-					<div className="md:col-span-1">
+					<div className="md:col-span-2">
 						<div className="glass-effect rounded-xl p-6 h-full">
 							<h2 className="text-xl font-semibold text-white mb-4">
 								Daily Weather Alerts
