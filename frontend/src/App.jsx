@@ -13,6 +13,19 @@ function App() {
     city: "",
   });
 
+  const ApiData = [
+    {
+      city: "berlin",
+      date: Date.now(),
+      temperature: "9",
+      description: "Rain",
+      feels_like: 11.0,
+      humidity: 75,
+      wind: 16,
+      pressure: 1001,
+    },
+  ];
+
   const weatherResult = document.getElementById("weatherResult");
   const weatherError = document.getElementById("weatherError");
   const initialState = document.getElementById("initialState");
@@ -23,9 +36,28 @@ function App() {
     //once getWeather API call is called then remove the initial state
     initialState.classList.add("hidden");
 
-    const result = " "; //API Results;
+    // const result = " "; //API Results;
+    const result = ApiData[0]; //API Results;
     if (result) {
       weatherResult.classList.remove("hidden");
+
+      const cityNameEl = document.getElementById("cityName");
+      const dateEl = document.getElementById("date");
+      const temperatureEl = document.getElementById("temperature");
+      const descriptionEl = document.getElementById("description");
+      const feelsLikeEl = document.getElementById("feelsLike");
+      const humidityEl = document.getElementById("humidity");
+      const windEl = document.getElementById("wind");
+      const pressureEl = document.getElementById("pressure");
+
+      cityNameEl.textContent = result.city;
+      dateEl.textContent = result.date;
+      temperatureEl.textContent = `${result.temperature}°C`;
+      descriptionEl.textContent = result.description;
+      feelsLikeEl.textContent = `${result.feels_like.toFixed(1)}°C`;
+      humidityEl.textContent = `${result.humidity}%`;
+      windEl.textContent = `${result.wind} km/h`;
+      pressureEl.textContent = `${result.pressure} hPa`;
     } else {
       weatherError.classList.remove("hidden");
     }
