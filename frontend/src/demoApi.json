@@ -1,0 +1,36 @@
+[
+	{
+		"coord": { "lon": 13.4105, "lat": 52.5244 },
+		"weather": [
+			{
+				"id": 803,
+				"main": "Clouds",
+				"description": "broken clouds",
+				"icon": "04d"
+			}
+		],
+		"base": "stations",
+		"main": {
+			"temp": 22.35,
+			"feels_like": 21.76,
+			"temp_min": 22.35,
+			"temp_max": 22.35,
+			"pressure": 1023,
+			"humidity": 43,
+			"sea_level": 1023,
+			"grnd_level": 1018
+		},
+		"visibility": 10000,
+		"wind": { "speed": 4.4, "deg": 308, "gust": 5.3 },
+		"clouds": { "all": 78 },
+		"dt": 1745937571,
+		"sys": { "country": "DE", "sunrise": 1745897919, "sunset": 1745951311 },
+		"timezone": 7200,
+		"id": 2950159,
+		"name": "Berlin",
+		"cod": 200
+	},
+	{
+		"for metric data": "https://api.openweathermap.org/data/2.5/weather?q=berlin&units=metric&appid=7727832c572df507ab713c88d41df21d"
+	}
+]
