@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -19,8 +20,18 @@ import (
 type weatherData struct {
 	Name string `json:"name"`
 	Main struct {
-		Kelvin float64 `json:"temp"`
+		Temp      float64 `json:"temp"`
+		FeelsLike float64 `json:"feels_like"`
+		Pressure  float64 `json:"pressure"`
+		Humidity  int     `json:"humidity"`
 	} `json:"main"`
+	Wind struct {
+		Speed float32 `json:"speed"`
+	} `json:"wind"`
+	Weather []struct {
+		Description string `json:"description"`
+	} `json:"weather"`
+	Date int `json:"dt"`
 }
 
 func SendMail() {
@@ -33,7 +44,7 @@ func SendMail() {
 	// Prepare the email message
 	SMTPPort, err := strconv.Atoi(SMTPport)
 	if err != nil {
-		fmt.Println("Error Converting SMTP Port!! ", err)
+		log.Println("Error Converting SMTP Port!! ", err)
 	}
 
 	for _, user := range helpers.Users {
@@ -47,21 +58,22 @@ func SendMail() {
 		//API Request
 		body, err := Query(user.City)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 		m.SetBody("text/plain", fmt.Sprintf("%v", body))
 
 		dialer := gomail.NewDialer(SMTPHost, SMTPPort, Username, Password)
 		err = dialer.DialAndSend(m)
 		if err != nil {
-			fmt.Println("Error Sending Mail to ", user.Email, "  ", err)
+			log.Println("Error Sending Mail to ", user.Email, "  ", err)
 		} else {
-			fmt.Println("Email Sent Success!!")
+			log.Println("Email Sent Success!!")
 		}
 	}
 }
 
 func Hello(w http.ResponseWriter, r *http.Request) {
+	helpers.EnableCors(w)
 	w.Write([]byte("Hello from go\n"))
 }
 
@@ -81,25 +93,28 @@ func Query(city string) (weatherData, error) {
 	/*Redis Get Query*/
 	value, err := r.Get(db.Ctx, city).Result()
 	if err == redis.Nil {
-		fmt.Println("No data for City: " + city + " in Redis")
+		log.Println("No data for City: " + city + " in Redis")
 
-		fmt.Println("API Called")
-		resp, err := http.Get("http://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=" + apiConfigData.OpenWeatherMapApiKey + "&units=metric")
+		url := "http://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=" + apiConfigData.OpenWeatherMapApiKey + "&units=metric"
+		log.Println("API Called")
+		resp, err := http.Get(url)
 		if err != nil {
+			log.Println("Request error:", err)
 			return weatherData{}, err
 		}
 		defer resp.Body.Close()
 
 		err = json.NewDecoder(resp.Body).Decode(&data)
 		if err != nil {
+			log.Println("Error-2: ", data)
 			return weatherData{}, err
 		}
-		fmt.Println(data)
+		log.Println("Data: ", data)
 
 		//converting the data to json to store it in redis
 		jsonData, err := json.Marshal(data)
 		if err != nil {
-			fmt.Println("Json Data Conversion Failed", err)
+			log.Println("Json Data Conversion Failed", err)
 		}
 
 		/*Redis Set Query*/
@@ -108,17 +123,17 @@ func Query(city string) (weatherData, error) {
 		//expiry set for 1 hour
 		err = r.Set(db.Ctx, city, jsonData, 3600*time.Second).Err()
 		if err != nil {
-			fmt.Println("Could Not Set the value in Redis, ", err)
+			log.Println("Could Not Set the value in Redis, ", err)
 		}
 
 	} else if err != nil {
-		fmt.Println("Error in Redis, ", err)
+		log.Println("Error in Redis, ", err)
 		return weatherData{}, err
 	} else {
-		fmt.Println("API Not Called!! Data From Redis :)")
+		log.Println("API Not Called!! Data From Redis :)")
 		err = json.Unmarshal([]byte(value), &data)
 		if err != nil {
-			fmt.Println("Unable to Unmarshal Data from Json, ", err)
+			log.Println("Unable to Unmarshal Data from Json, ", err)
 			return weatherData{}, err
 		}
 	}
@@ -128,6 +143,7 @@ func Query(city string) (weatherData, error) {
 
 // Need to change this according to the UserList array - done, Need to test
 func AddName(w http.ResponseWriter, r *http.Request) {
+	helpers.EnableCors(w)
 	if r.Method == "POST" {
 		var user helpers.UserList
 		err := json.NewDecoder(r.Body).Decode(&user)
@@ -157,6 +173,7 @@ func AddName(w http.ResponseWriter, r *http.Request) {
 }
 
 func DelName(w http.ResponseWriter, r *http.Request) {
+	helpers.EnableCors(w)
 	email := strings.SplitN(r.URL.Path, "/", 3)[2]
 	for i, val := range helpers.Users {
 		if val.Email == email {
