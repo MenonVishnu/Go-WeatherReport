@@ -55,7 +55,8 @@ function App() {
 		hideInitialDiv(); //once getWeather API call is called then remove the initial state div
 
 		//api url
-		var url = `http://localhost:8080/weather/${city}`;
+		var url_local = `http://localhost:8080/weather/${city}`;
+		var url = `https://go-weatherreport.onrender.com/weather/${city}`;
 
 		var result = await fetch(url);
 		if (!result.ok) {
@@ -63,43 +64,6 @@ function App() {
 		}
 		result = await result.json();
 		console.log(result);
-		// var result;
-
-		// if (city === "berlin") {
-		// 	result = {
-		// 		coord: { lon: 13.4105, lat: 52.5244 },
-		// 		weather: [
-		// 			{
-		// 				id: 803,
-		// 				main: "Clouds",
-		// 				description: "broken clouds",
-		// 				icon: "04d",
-		// 			},
-		// 		],
-		// 		base: "stations",
-		// 		main: {
-		// 			temp: 22.35,
-		// 			feels_like: 21.76,
-		// 			temp_min: 22.35,
-		// 			temp_max: 22.35,
-		// 			pressure: 1023,
-		// 			humidity: 43,
-		// 			sea_level: 1023,
-		// 			grnd_level: 1018,
-		// 		},
-		// 		visibility: 10000,
-		// 		wind: { speed: 4.4, deg: 308, gust: 5.3 },
-		// 		clouds: { all: 78 },
-		// 		dt: 1745937571,
-		// 		sys: { country: "DE", sunrise: 1745897919, sunset: 1745951311 },
-		// 		timezone: 7200,
-		// 		id: 2950159,
-		// 		name: "Berlin",
-		// 		cod: 200,
-		// 	};
-		// } else {
-		// 	result = null; //API Results;
-		// }
 
 		if (result.name) {
 			//if result is
@@ -137,7 +101,8 @@ function App() {
 		if (userData.name && userData.city && userData.email) {
 			//API Call to add user to subscription list.
 			console.log("User Added: ", userData);
-			var url = `http://localhost:8080/addname/`;
+			// var url_local = `http://localhost:8080/addname/`;
+			var url = `https://go-weatherreport.onrender.com/addname/`;
 
 			var result = await fetch(url, {
 				method: "POST",
