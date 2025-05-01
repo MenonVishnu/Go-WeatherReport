@@ -73,13 +73,16 @@ func SendMail() {
 }
 
 func Hello(w http.ResponseWriter, r *http.Request) {
-	helpers.EnableCors(w)
 	w.Write([]byte("Hello from go\n"))
 }
 
 func Query(city string) (weatherData, error) {
 	apiConfigData, err := helpers.LoadApiConfig(os.Getenv("APIFILE"))
 	if err != nil {
+		return weatherData{}, err
+	}
+
+	if city == "" {
 		return weatherData{}, err
 	}
 
@@ -143,7 +146,6 @@ func Query(city string) (weatherData, error) {
 
 // Need to change this according to the UserList array - done, Need to test
 func AddName(w http.ResponseWriter, r *http.Request) {
-	helpers.EnableCors(w)
 	if r.Method == "POST" {
 		var user helpers.UserList
 		err := json.NewDecoder(r.Body).Decode(&user)
@@ -173,7 +175,6 @@ func AddName(w http.ResponseWriter, r *http.Request) {
 }
 
 func DelName(w http.ResponseWriter, r *http.Request) {
-	helpers.EnableCors(w)
 	email := strings.SplitN(r.URL.Path, "/", 3)[2]
 	for i, val := range helpers.Users {
 		if val.Email == email {

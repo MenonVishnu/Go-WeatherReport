@@ -60,12 +60,6 @@ func StoreUserList(filename string, users []UserList) error {
 	return nil
 }
 
-func EnableCors(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "*") // Change to specific origin in production
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-}
-
 func CorsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Add CORS headers

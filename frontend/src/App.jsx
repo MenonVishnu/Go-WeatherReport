@@ -1,22 +1,23 @@
 import { useEffect, useState } from "react";
 import Search from "./components/Search";
+import Notification from "./components/Notification";
 
 import "./App.css";
-import Notification from "./components/Notification";
-// import "./script.js";
 
 function App() {
 	const [city, setCity] = useState("");
 	const [userData, setUserData] = useState({
-		name: "",
-		email: "",
-		city: "",
+		name: null,
+		email: null,
+		city: null,
 	});
 
 	const [hideInitial, setHideInitial] = useState(true);
 
 	const weatherResult = document.getElementById("weatherResult");
 	const weatherError = document.getElementById("weatherError");
+	const formSuccess = document.getElementById("formSuccess");
+	const formError = document.getElementById("formError");
 	// const initialState = document.getElementById("initialState");
 
 	const hideInitialDiv = () => {
@@ -131,31 +132,36 @@ function App() {
 	};
 
 	const subscribeUser = async () => {
-		//API Call to add user to subscription list.
-		console.log("User Added: ", userData);
+		console.log(userData);
 
-		var url = `http://localhost:8080/addname/`;
+		if (userData.name && userData.city && userData.email) {
+			//API Call to add user to subscription list.
+			console.log("User Added: ", userData);
+			var url = `http://localhost:8080/addname/`;
 
-		// var result = await fetch(url, {
-		//   method: "POST",
-		//   body: JSON.stringify(userData),
-		// });
-		// if (!result.ok) {
-		//   throw new Error(`Response status: ${result.status}`);
-		// }
-		// result = await result.json();
-		// console.log(result);
+			var result = await fetch(url, {
+				method: "POST",
+				body: JSON.stringify(userData),
+			});
+			if (!result.ok) {
+				throw new Error(`Response status: ${result.status}`);
+			}
+			result = await result.json();
+			console.log(result);
 
-		const formSuccess = document.getElementById("formSuccess");
+			formSuccess.classList.remove("hidden");
+			formError.classList.add("hidden");
 
-		formSuccess.classList.remove("hidden");
-
-		userData.name = "";
-		userData.email = "";
-		userData.city = "";
-		document.getElementById("name").value = "";
-		document.getElementById("email").value = "";
-		document.getElementById("notifCity").value = "";
+			userData.name = null;
+			userData.email = null;
+			userData.city = null;
+			document.getElementById("name").value = "";
+			document.getElementById("email").value = "";
+			document.getElementById("notifCity").value = "";
+		} else {
+			formSuccess.classList.add("hidden");
+			formError.classList.remove("hidden");
+		}
 	};
 
 	return (

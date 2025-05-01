@@ -82,6 +82,11 @@ function Notification(props) {
 					className="hidden mt-4 bg-green-500 bg-opacity-20 text-white p-3 rounded-lg text-center">
 					<p>Successfully subscribed!</p>
 				</div>
+				<div
+					id="formError"
+					className="hidden mt-4 bg-red-500 bg-opacity-20 text-white p-3 rounded-lg text-center">
+					<p>Enter All Fields!</p>
+				</div>
 			</div>
 		</div>
 	);
