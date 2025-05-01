@@ -77,13 +77,10 @@ func Hello(w http.ResponseWriter, r *http.Request) {
 }
 
 func Query(city string) (weatherData, error) {
-	apiConfigData, err := helpers.LoadApiConfig(os.Getenv("APIFILE"))
-	if err != nil {
-		return weatherData{}, err
-	}
+	apiConfigData := os.Getenv("OpenWeatherMapApiKey")
 
 	if city == "" {
-		return weatherData{}, err
+		return weatherData{}, fmt.Errorf("No City Specified")
 	}
 
 	//Redis Connection
@@ -98,7 +95,7 @@ func Query(city string) (weatherData, error) {
 	if err == redis.Nil {
 		log.Println("No data for City: " + city + " in Redis")
 
-		url := "http://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=" + apiConfigData.OpenWeatherMapApiKey + "&units=metric"
+		url := "http://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=" + apiConfigData + "&units=metric"
 		log.Println("API Called")
 		resp, err := http.Get(url)
 		if err != nil {
