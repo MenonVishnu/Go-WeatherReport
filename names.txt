@@ -1,1 +1,0 @@
-[{"name":"Demo","email":"vishnujiodhandhanadhan@gmail.com","city":"Ghansoli"},{"name":"demo2","email":"dandruffdopamine@gmail.com","city":"delhi"}]

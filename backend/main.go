@@ -38,10 +38,13 @@ func main() {
 	//get emails from text file
 	helpers.Users, _ = helpers.LoadUserList(os.Getenv("FILENAME"))
 
+	mux := http.NewServeMux()
+
+	handler := helpers.CorsMiddleware(mux)
 	/*For debugging Purpose*/
 	// http.HandleFunc("/send", controllers.SendMail)
-	http.HandleFunc("/hello", controllers.Hello)
-	http.HandleFunc("/weather/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/hello", controllers.Hello)
+	mux.HandleFunc("/weather/", func(w http.ResponseWriter, r *http.Request) {
 		city := strings.SplitN(r.URL.Path, "/", 3)[2]
 		data, err := controllers.Query(city)
 		if err != nil {
@@ -53,12 +56,12 @@ func main() {
 	})
 
 	//add emails to the list and store them in file
-	http.HandleFunc("/addname/", controllers.AddName)
+	mux.HandleFunc("/addname/", controllers.AddName)
 	//delete emails from the list, basically unsubscribing them
-	http.HandleFunc("/delname/", controllers.DelName)
+	mux.HandleFunc("/delname/", controllers.DelName)
 
 	//send mails to all the emails in names.txt
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8080", handler)
 }
 
 /*
